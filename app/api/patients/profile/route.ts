@@ -51,6 +51,10 @@ export async function PUT(request: Request) {
       }
     }
 
+    // Remove fields that should not be updated directly or cause conflicts
+    delete updateData['clerkId'];
+    delete updateData['_id'];
+
     // Ensure phone comes through as-is; frontend already sends `phone`
     // Keep address as nested object per schema
     // Upsert so that a missing patient record is created on first save
