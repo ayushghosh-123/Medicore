@@ -51,7 +51,7 @@ Healthcare Plus is a modern, full-stack healthcare management system designed to
 - **Clerk** - Authentication and user management
 
 ### **AI & Analytics**
-- **Google AI (Gemini)** - Medical report analysis
+- **Open AI (gptMini)** - Medical report analysis
 - **React Query** - Data fetching and caching
 
 ### **Development Tools**
@@ -96,8 +96,8 @@ Healthcare Plus is a modern, full-stack healthcare management system designed to
    # Or for MongoDB Atlas:
    # MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/healthcare_plus
 
-   # Google AI (for medical report analysis)
-   GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+   # Open AI (for medical report analysis)
+   OPEN_AI_API_KEY=your_google_ai_api_key_here
 
    # Next.js
    NEXTAUTH_URL=http://localhost:3000

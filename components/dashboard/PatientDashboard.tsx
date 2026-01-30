@@ -1,22 +1,29 @@
 'use client';
 
-// Import necessary React hooks and components from various libraries.
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
-// UI components from a custom components library.
+import { useUser, UserButton } from '@clerk/nextjs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-// Icons from lucide-react.
-import { Calendar, Clock, User, Stethoscope, Plus, Search, Filter, Star } from 'lucide-react';
-// Animation library for smooth transitions.
-import { motion } from 'framer-motion';
+import {
+  Calendar,
+  Clock,
+  User,
+  Stethoscope,
+  Plus,
+  Search,
+  Filter,
+  Star,
+  Menu,
+  X,
+  LogOut,
+  Heart
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from "next/link";
-// Custom components for different parts of the dashboard.
 import PatientProfile from './PatientProfile';
 import PaymentMethodSelector from '../PaymentMethodSelector';
 
-// Defines the TypeScript interface for a Doctor object, ensuring type safety.
 interface Doctor {
   _id: string;
   firstName: string;
@@ -35,10 +42,9 @@ interface Doctor {
   }>;
 }
 
-// Defines the TypeScript interface for an Appointment object.
 interface Appointment {
   _id: string;
-  doctor: Doctor; // Embeds the Doctor interface as a nested object.
+  doctor: Doctor;
   appointmentDate: string;
   appointmentTime: string;
   status: string;
@@ -46,69 +52,47 @@ interface Appointment {
   consultationFee: number;
 }
 
-// The main component for the patient's dashboard.
 export default function PatientDashboard() {
-  // Use the useUser hook from Clerk to get the authenticated user's details.
   const { user } = useUser();
-  
-  // State variables using the useState hook to manage the component's data and UI state.
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(true);
-  // Controls which view (tab) is currently displayed to the user.
   const [activeTab, setActiveTab] = useState('overview');
-  // Boolean state to control the visibility of the appointment booking modal.
   const [showBookingModal, setShowBookingModal] = useState(false);
-  // Boolean state to control the visibility of the payment modal within the booking flow.
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  // Stores the details of the doctor selected by the user for booking.
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  // Stores the data entered by the user in the booking form.
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [bookingData, setBookingData] = useState({
     appointmentDate: '',
     appointmentTime: '',
     reason: ''
   });
 
-  // The useEffect hook runs a side effect (data fetching) after the component mounts.
-  // The empty dependency array `[]` ensures it only runs once.
   useEffect(() => {
     fetchData();
   }, []);
 
-  /**
-   * Asynchronous function to fetch patient appointments and the list of all doctors.
-   * It makes two API calls concurrently using `Promise.all` for better performance.
-   */
   const fetchData = async () => {
     try {
-      setLoading(true); // Start the loading state.
-      // Use Promise.all to fetch both datasets simultaneously.
+      setLoading(true);
       const [appointmentsRes, doctorsRes] = await Promise.all([
-        fetch('/api/appointments/patient'),
-        fetch('/api/doctors')
+        fetch('/api/appointments/patient', { cache: 'no-store' }),
+        fetch('/api/doctors', { cache: 'no-store' })
       ]);
 
-      // Parse the JSON responses.
       const appointmentsData = await appointmentsRes.json();
       const doctorsData = await doctorsRes.json();
 
-      // Update the state with the fetched data, handling potential empty responses.
       setAppointments(appointmentsData.appointments || []);
       setDoctors(doctorsData.doctors || []);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
-      // Set loading to false once fetching is complete, regardless of success or failure.
       setLoading(false);
     }
   };
 
-  /**
-   * Handles the click event when a user wants to book an appointment with a doctor.
-   * It finds the doctor by ID and sets the state to display the booking modal.
-   * @param {string} doctorId - The unique ID of the doctor.
-   */
   const handleBookAppointment = (doctorId: string) => {
     const doctor = doctors.find(d => d._id === doctorId);
     if (doctor) {
@@ -117,23 +101,14 @@ export default function PatientDashboard() {
     }
   };
 
-  /**
-   * Asynchronous function to submit the booking form data to the server.
-   * This is triggered when the user confirms their booking details.
-   * @param {React.FormEvent} e - The form submission event.
-   */
   const handleBookingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDoctor) return;
 
     try {
-      // Send a POST request to the API with the booking details.
       const response = await fetch('/api/appointments/book', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Stringify the booking data to send it in the request body.
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           doctorId: selectedDoctor._id,
           appointmentDate: bookingData.appointmentDate,
@@ -144,14 +119,11 @@ export default function PatientDashboard() {
       });
 
       const result = await response.json();
-      
-      // Check if the booking was successful based on the API response.
+
       if (result.success) {
-        // Close the modals and reset the state after a successful booking.
         setShowBookingModal(false);
         setSelectedDoctor(null);
         setBookingData({ appointmentDate: '', appointmentTime: '', reason: '' });
-        // Re-fetch data to update the appointments list on the dashboard.
         fetchData();
         alert('Appointment booked successfully!');
       } else {
@@ -163,12 +135,6 @@ export default function PatientDashboard() {
     }
   };
 
-  /**
-   * A helper function to return the correct Tailwind CSS class for a badge based on the appointment's status.
-   * This provides a simple way to apply different colors for different statuses.
-   * @param {string} status - The status of the appointment.
-   * @returns {string} The Tailwind CSS class string.
-   */
   const getStatusColor = (status: string): string => {
     switch (status) {
       case 'Scheduled': return 'bg-blue-100 text-blue-800';
@@ -179,87 +145,175 @@ export default function PatientDashboard() {
     }
   };
 
-  // Filters the full appointments list to get the three most recent upcoming appointments.
-  const upcomingAppointments = appointments.filter(apt => 
+  const upcomingAppointments = appointments.filter(apt =>
     new Date(apt.appointmentDate) >= new Date() && apt.status !== 'Cancelled'
   ).slice(0, 3);
 
-  // Filters the full appointments list to get the three most recent completed appointments.
-  const recentAppointments = appointments.filter(apt => 
+  const recentAppointments = appointments.filter(apt =>
     apt.status === 'Completed'
   ).slice(0, 3);
 
-  // Displays a loading spinner while the initial data fetch is in progress.
+  const filteredDoctors = doctors.filter(doctor =>
+    searchQuery === '' ||
+    `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doctor.specialization.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const navigationItems = [
+    { id: 'overview', label: 'Overview', icon: Calendar },
+    { id: 'doctors', label: 'Find Doctors', icon: Stethoscope },
+    { id: 'appointments', label: 'My Appointments', icon: Clock },
+    { id: 'profile', label: 'Profile', icon: User },
+  ];
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading your dashboard...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* The dashboard's main header with navigation tabs and user information. */}
-      <header className="bg-white shadow-sm border-b border-blue-100 sticky top-0 z-10">
+      {/* Dashboard Header */}
+      <header className="bg-white shadow-sm border-b border-blue-100 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            
-          {/* Renders navigation buttons dynamically based on the available tabs. */}
-            <nav className="hidden md:flex space-x-8">
-              {['overview', 'doctors', 'profile', 'chat'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-                    activeTab === tab
-                      ? 'bg-blue-100 text-blue-700' // Active tab styling.
-                      : 'text-gray-500 hover:text-gray-700' // Inactive tab styling.
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+          <div className="flex justify-between items-center h-16 lg:h-20">
+            {/* Logo */}
+            <Link href="/" className="flex items-center space-x-2 group">
+              <Heart className="h-7 w-7 text-blue-600 group-hover:text-blue-700 transition-colors" />
+              <span className="text-lg sm:text-xl font-bold text-gray-900 hidden sm:block">
+                HealthCare<span className="text-blue-600">Plus</span>
+              </span>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden lg:flex space-x-1">
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === item.id
+                      ? 'bg-blue-100 text-blue-700 shadow-sm'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </nav>
 
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {user?.firstName}</span>
+            {/* User Info & Mobile Menu */}
+            <div className="flex items-center space-x-3">
+              <div className="hidden md:flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-xs text-gray-500">Patient</p>
+                </div>
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <UserButton
+                    afterSignOutUrl="/"
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-10 h-10"
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Navigation */}
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="lg:hidden border-t border-gray-100 overflow-hidden"
+              >
+                <nav className="py-4 space-y-1">
+                  {navigationItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === item.id
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:bg-gray-100'
+                          }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Conditional rendering of different sections based on the active tab. */}
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Overview Tab */}
         {activeTab === 'overview' && (
-          // Uses Framer Motion for a fade-in animation.
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-8"
+            transition={{ duration: 0.5 }}
+            className="space-y-6 lg:space-y-8"
           >
-            {/* A welcoming banner that greets the user by name. */}
-            <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-8 text-white">
-              <h1 className="text-3xl font-bold mb-2">
-                Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening'}, {user?.firstName}!
+            {/* Welcome Banner */}
+            <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-xl lg:rounded-2xl p-6 lg:p-8 text-white">
+              <h1 className="text-2xl lg:text-3xl font-bold mb-2">
+                {getGreeting()}, {user?.firstName}!
               </h1>
-              <p className="text-blue-100 text-lg">
+              <p className="text-blue-100 text-base lg:text-lg">
                 Your health journey continues. Let&apos;s make today count.
               </p>
             </div>
 
-            {/* A grid of cards displaying quick statistics. */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
               <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center space-x-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base lg:text-lg flex items-center space-x-2">
                     <Calendar className="h-5 w-5 text-blue-600" />
                     <span>Upcoming</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-blue-600 mb-1">
+                  <div className="text-2xl lg:text-3xl font-bold text-blue-600 mb-1">
                     {upcomingAppointments.length}
                   </div>
                   <p className="text-gray-600 text-sm">Appointments scheduled</p>
@@ -267,29 +321,29 @@ export default function PatientDashboard() {
               </Card>
 
               <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center space-x-2">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base lg:text-lg flex items-center space-x-2">
                     <Clock className="h-5 w-5 text-green-600" />
                     <span>Completed</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-green-600 mb-1">
+                  <div className="text-2xl lg:text-3xl font-bold text-green-600 mb-1">
                     {recentAppointments.length}
                   </div>
                   <p className="text-gray-600 text-sm">Recent visits</p>
                 </CardContent>
               </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center space-x-2">
+              <Card className="hover:shadow-lg transition-shadow sm:col-span-2 lg:col-span-1">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base lg:text-lg flex items-center space-x-2">
                     <Stethoscope className="h-5 w-5 text-purple-600" />
                     <span>Doctors</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-purple-600 mb-1">
+                  <div className="text-2xl lg:text-3xl font-bold text-purple-600 mb-1">
                     {doctors.length}
                   </div>
                   <p className="text-gray-600 text-sm">Available providers</p>
@@ -297,46 +351,47 @@ export default function PatientDashboard() {
               </Card>
             </div>
 
-            {/* Card for displaying upcoming appointments. */}
+            {/* Upcoming Appointments */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Upcoming appointments</span>
-                  <Button 
-                    size="sm" 
+                <CardTitle className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <span className="text-lg lg:text-xl">Upcoming Appointments</span>
+                  <Button
+                    size="sm"
                     onClick={() => setActiveTab('appointments')}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                   >
                     View All
                   </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* Renders a list of appointments if they exist, otherwise shows a call-to-action message. */}
                 {upcomingAppointments.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 lg:space-y-4">
                     {upcomingAppointments.map((appointment) => (
                       <div
                         key={appointment._id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors gap-3"
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <User className="h-5 w-5 text-blue-600" />
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <User className="h-5 w-5 lg:h-6 lg:w-6 text-blue-600" />
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-gray-900">
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-gray-900 text-sm lg:text-base truncate">
                               Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
                             </h4>
-                            <p className="text-sm text-gray-600">{appointment.doctor.specialization}</p>
+                            <p className="text-xs lg:text-sm text-gray-600">{appointment.doctor.specialization}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-sm font-medium text-gray-900">
-                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                        <div className="flex items-center justify-between sm:justify-end sm:text-right gap-3">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {new Date(appointment.appointmentDate).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs lg:text-sm text-gray-600">{appointment.appointmentTime}</div>
                           </div>
-                          <div className="text-sm text-gray-600">{appointment.appointmentTime}</div>
-                          <Badge className={`mt-1 ${getStatusColor(appointment.status)}`}>
+                          <Badge className={`${getStatusColor(appointment.status)}`}>
                             {appointment.status}
                           </Badge>
                         </div>
@@ -344,11 +399,11 @@ export default function PatientDashboard() {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600">No upcoming appointments</p>
-                    <Button 
-                      className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  <div className="text-center py-8 lg:py-12">
+                    <Calendar className="h-12 w-12 lg:h-16 lg:w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4 lg:mb-6">No upcoming appointments</p>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700"
                       onClick={() => setActiveTab('doctors')}
                     >
                       Book Appointment
@@ -358,92 +413,95 @@ export default function PatientDashboard() {
               </CardContent>
             </Card>
 
-            {/* Quick action buttons to navigate to other sections. */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('doctors')}>
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => setActiveTab('doctors')}
+              >
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
+                  <CardTitle className="flex items-center space-x-2 text-base lg:text-lg">
                     <Plus className="h-5 w-5 text-green-600" />
                     <span>Book New Appointment</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Find and book appointments with our healthcare providers
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('appointments')}>
+              <Card
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => setActiveTab('appointments')}
+              >
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
+                  <CardTitle className="flex items-center space-x-2 text-base lg:text-lg">
                     <Calendar className="h-5 w-5 text-blue-600" />
                     <span>View Medical History</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-sm">
                     Access your complete appointment and medical history
                   </CardDescription>
                 </CardHeader>
               </Card>
 
-              {/* A link to a future analytics page. */}
-              <Link href="/analytics" passHref>
-                <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <Stethoscope className="h-5 w-5 text-orange-600" />
-                      <span>Analyse Your Report</span>
-                    </CardTitle>
-                    <CardDescription>
-                      Get AI-powered insights on your medical reports (coming soon)
-                    </CardDescription>
-                  </CardHeader>
-                </Card>
-              </Link>
+              <Card className="cursor-pointer hover:shadow-lg transition-all hover:scale-105 md:col-span-2 lg:col-span-1">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2 text-base lg:text-lg">
+                    <Stethoscope className="h-5 w-5 text-orange-600" />
+                    <span>Analyze Your Report</span>
+                  </CardTitle>
+                  <CardDescription className="text-sm">
+                    Get AI-powered insights on your medical reports
+                  </CardDescription>
+                </CardHeader>
+              </Card>
             </div>
           </motion.div>
         )}
 
-        {/* 'Find a Doctor' section. */}
+        {/* Doctors Tab */}
         {activeTab === 'doctors' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
             className="space-y-6"
           >
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <h2 className="text-2xl font-bold text-gray-900">Find a Doctor</h2>
-              <div className="flex space-x-2">
-                <div className="relative">
+              <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Find a Doctor</h2>
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full sm:w-auto">
+                <div className="relative flex-grow sm:flex-grow-0">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <input
                     type="text"
                     placeholder="Search doctors..."
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-full sm:w-64 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                   />
                 </div>
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" className="hidden sm:flex">
                   <Filter className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Maps over the doctors array to render a Card for each doctor. */}
-              {doctors.map((doctor) => (
-                <Card key={doctor._id} className="hover:shadow-lg transition-shadow">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+              {filteredDoctors.map((doctor) => (
+                <Card key={doctor._id} className="hover:shadow-lg transition-shadow flex flex-col">
                   <CardHeader className="pb-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-xl mb-4">
-                      {/* Displays the doctor's initials. */}
+                    <div className="w-14 h-14 lg:w-16 lg:h-16 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold text-lg lg:text-xl mb-4">
                       {doctor.firstName.charAt(0)}{doctor.lastName.charAt(0)}
                     </div>
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-lg lg:text-xl">
                       Dr. {doctor.firstName} {doctor.lastName}
                     </CardTitle>
                     <CardDescription className="text-sm">
                       {doctor.specialization} • {doctor.experience} years experience
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 lg:space-y-4 flex-grow flex flex-col">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Qualification</span>
                       <span className="font-medium">{doctor.qualification}</span>
@@ -462,9 +520,9 @@ export default function PatientDashboard() {
                     {doctor.biography && (
                       <p className="text-sm text-gray-600 line-clamp-3">{doctor.biography}</p>
                     )}
-                    <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleBookAppointment(doctor._id)} // Triggers the booking process.
+                    <Button
+                      className="w-full bg-blue-600 hover:bg-blue-700 mt-auto"
+                      onClick={() => handleBookAppointment(doctor._id)}
                     >
                       Book Appointment
                     </Button>
@@ -472,44 +530,53 @@ export default function PatientDashboard() {
                 </Card>
               ))}
             </div>
+
+            {filteredDoctors.length === 0 && (
+              <div className="text-center py-12">
+                <Stethoscope className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No doctors found</h3>
+                <p className="text-gray-600">Try adjusting your search criteria</p>
+              </div>
+            )}
           </motion.div>
         )}
 
-        {/* 'My Appointments' section. */}
+        {/* Appointments Tab */}
         {activeTab === 'appointments' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
             className="space-y-6"
           >
-            <h2 className="text-2xl font-bold text-gray-900">My Appointments</h2>
-            
+            <h2 className="text-xl lg:text-2xl font-bold text-gray-900">My Appointments</h2>
+
             <div className="space-y-4">
               {appointments.length > 0 ? (
-                // Renders a list of all appointments.
                 appointments.map((appointment) => (
                   <Card key={appointment._id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold">
+                    <CardContent className="p-4 lg:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center space-x-3 lg:space-x-4">
+                          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-green-500 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0">
                             {appointment.doctor.firstName.charAt(0)}{appointment.doctor.lastName.charAt(0)}
                           </div>
-                          <div>
-                            <h4 className="text-lg font-semibold text-gray-900">
+                          <div className="min-w-0">
+                            <h4 className="text-base lg:text-lg font-semibold text-gray-900 truncate">
                               Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
                             </h4>
-                            <p className="text-gray-600">{appointment.doctor.specialization}</p>
-                            <p className="text-sm text-gray-500">{appointment.reason}</p>
+                            <p className="text-sm lg:text-base text-gray-600">{appointment.doctor.specialization}</p>
+                            <p className="text-xs lg:text-sm text-gray-500">{appointment.reason}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-semibold text-gray-900">
-                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                        <div className="flex items-center justify-between sm:justify-end sm:text-right gap-3">
+                          <div>
+                            <div className="text-base lg:text-lg font-semibold text-gray-900">
+                              {new Date(appointment.appointmentDate).toLocaleDateString()}
+                            </div>
+                            <div className="text-sm text-gray-600">{appointment.appointmentTime}</div>
                           </div>
-                          <div className="text-gray-600">{appointment.appointmentTime}</div>
-                          <Badge className={`mt-2 ${getStatusColor(appointment.status)}`}>
+                          <Badge className={`${getStatusColor(appointment.status)}`}>
                             {appointment.status}
                           </Badge>
                         </div>
@@ -518,12 +585,11 @@ export default function PatientDashboard() {
                   </Card>
                 ))
               ) : (
-                // Displays a message and a button if no appointments are found.
                 <div className="text-center py-12">
                   <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">No appointments yet</h3>
                   <p className="text-gray-600 mb-6">Book your first appointment to get started</p>
-                  <Button 
+                  <Button
                     className="bg-blue-600 hover:bg-blue-700"
                     onClick={() => setActiveTab('doctors')}
                   >
@@ -535,19 +601,36 @@ export default function PatientDashboard() {
           </motion.div>
         )}
 
-        {/* 'Patient Profile' section, which uses a separate component. */}
-        {activeTab === 'profile' && (
-          <PatientProfile />
-        )}
+        {/* Profile Tab */}
+        {activeTab === 'profile' && <PatientProfile />}
+      </main>
 
-        {/* The booking modal, rendered conditionally. */}
+      {/* Booking Modal */}
+      <AnimatePresence>
         {showBookingModal && selectedDoctor && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-              <h3 className="text-lg font-semibold mb-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => {
+              if (!showPaymentModal) {
+                setShowBookingModal(false);
+                setSelectedDoctor(null);
+                setBookingData({ appointmentDate: '', appointmentTime: '', reason: '' });
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-xl p-6 w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg lg:text-xl font-semibold mb-4">
                 Book Appointment with Dr. {selectedDoctor.firstName} {selectedDoctor.lastName}
               </h3>
-              {/* Toggles between the booking form and the payment selector. */}
               {!showPaymentModal ? (
                 <form onSubmit={handleBookingSubmit} className="space-y-4">
                   <div>
@@ -558,9 +641,9 @@ export default function PatientDashboard() {
                       type="date"
                       required
                       value={bookingData.appointmentDate}
-                      onChange={(e) => setBookingData({...bookingData, appointmentDate: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      min={new Date().toISOString().split('T')[0]} // Prevents selecting past dates.
+                      onChange={(e) => setBookingData({ ...bookingData, appointmentDate: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min={new Date().toISOString().split('T')[0]}
                     />
                   </div>
                   <div>
@@ -570,8 +653,8 @@ export default function PatientDashboard() {
                     <select
                       required
                       value={bookingData.appointmentTime}
-                      onChange={(e) => setBookingData({...bookingData, appointmentTime: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => setBookingData({ ...bookingData, appointmentTime: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select time</option>
                       <option value="09:00">09:00 AM</option>
@@ -589,13 +672,13 @@ export default function PatientDashboard() {
                     <textarea
                       required
                       value={bookingData.reason}
-                      onChange={(e) => setBookingData({...bookingData, reason: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      onChange={(e) => setBookingData({ ...bookingData, reason: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
                       placeholder="Describe your symptoms or reason for visit..."
                     />
                   </div>
-                  <div className="flex justify-end space-x-3 pt-4">
+                  <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4">
                     <Button
                       type="button"
                       variant="outline"
@@ -604,12 +687,13 @@ export default function PatientDashboard() {
                         setSelectedDoctor(null);
                         setBookingData({ appointmentDate: '', appointmentTime: '', reason: '' });
                       }}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>
-                    <Button 
-                      type="button" 
-                      className="bg-blue-600 hover:bg-blue-700"
+                    <Button
+                      type="button"
+                      className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                       onClick={() => setShowPaymentModal(true)}
                     >
                       Proceed to Payment
@@ -617,7 +701,6 @@ export default function PatientDashboard() {
                   </div>
                 </form>
               ) : (
-                // Renders the PaymentMethodSelector component when payment is initiated.
                 <PaymentMethodSelector
                   doctorId={selectedDoctor._id}
                   amount={selectedDoctor.consultationFee}
@@ -626,7 +709,6 @@ export default function PatientDashboard() {
                   appointmentTime={bookingData.appointmentTime}
                   reason={bookingData.reason}
                   onSuccess={() => {
-                    // Logic to execute after a successful payment.
                     setShowPaymentModal(false);
                     setShowBookingModal(false);
                     setSelectedDoctor(null);
@@ -636,10 +718,10 @@ export default function PatientDashboard() {
                   onCancel={() => setShowPaymentModal(false)}
                 />
               )}
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
