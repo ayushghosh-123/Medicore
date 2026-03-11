@@ -72,17 +72,6 @@ export default function Home() {
                 Experience seamless healthcare management with our comprehensive digital platform. 
                 Book appointments, manage medical records, and connect with healthcare professionals.
               </p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link href="/">
-                  <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
-                    Start Your Journey
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
-                <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                  Learn More
-                </Button>
-              </div>
             </motion.div>
             
             <motion.div
@@ -181,15 +170,12 @@ export default function Home() {
               Join thousands of patients and healthcare providers who trust HealthCare Plus.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/">
+              <Link href="/sign-up">
                 <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50 w-full sm:w-auto">
                   Check it Now
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white text-blue-800 hover:bg-white hover:text-blue-400 w-full sm:w-auto">
-                Contact Sales
-              </Button>
             </div>
           </motion.div>
         </div>

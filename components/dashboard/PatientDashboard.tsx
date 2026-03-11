@@ -187,63 +187,86 @@ export default function PatientDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Dashboard Header */}
-      <header className="bg-white shadow-sm border-b border-blue-100 sticky top-0 z-40">
+      <header className="bg-white/70 backdrop-blur-md sticky top-0 z-40 border-b border-blue-100/50 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 lg:h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2 group">
-              <Heart className="h-7 w-7 text-blue-600 group-hover:text-blue-700 transition-colors" />
-              <span className="text-lg sm:text-xl font-bold text-gray-900 hidden sm:block">
+            <Link href="/" className="flex items-center space-x-2.5 group">
+              <div className="bg-blue-600 p-1.5 rounded-xl group-hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200">
+                <Heart className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">
                 HealthCare<span className="text-blue-600">Plus</span>
               </span>
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex space-x-1">
+            <nav className="hidden lg:flex items-center space-x-1 bg-gray-100/50 p-1 rounded-xl">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = activeTab === item.id;
                 return (
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === item.id
-                      ? 'bg-blue-100 text-blue-700 shadow-sm'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${isActive
+                      ? 'text-blue-700'
+                      : 'text-gray-500 hover:text-gray-900 hover:bg-white/80'
                       }`}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeNav"
+                        className="absolute inset-0 bg-white shadow-sm rounded-lg"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <Icon className={`h-4 w-4 relative z-10 ${isActive ? 'text-blue-600' : ''}`} />
+                    <span className="relative z-10">{item.label}</span>
                   </button>
                 );
               })}
             </nav>
 
             {/* User Info & Mobile Menu */}
-            <div className="flex items-center space-x-3">
-              <div className="hidden md:flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-3 bg-white/50 py-1 pl-3 pr-1 rounded-full border border-gray-100 shadow-sm">
                 <div className="text-right">
-                  <p className="text-sm font-semibold text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-gray-500">Patient</p>
+                  <p className="text-sm font-bold text-gray-900 leading-none">{user?.firstName}</p>
+                  <p className="text-[10px] uppercase tracking-wider font-semibold text-blue-600 leading-none mt-1">Patient</p>
                 </div>
-                <div className="w-10 h-10 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white shadow-sm">
                   <UserButton
                     afterSignOutUrl="/"
                     appearance={{
                       elements: {
-                        avatarBox: "w-10 h-10"
+                        avatarBox: "w-8 h-8"
                       }
                     }}
                   />
                 </div>
               </div>
 
+              {/* Mobile UserButton */}
+              <div className="md:hidden">
+                <UserButton
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-8 h-8"
+                    }
+                  }}
+                />
+              </div>
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="lg:hidden p-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 border border-gray-200 transition-all active:scale-95"
               >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {mobileMenuOpen ? <X className="h-5 w-5 text-gray-900" /> : <Menu className="h-5 w-5 text-gray-900" />}
               </button>
+
             </div>
           </div>
 
@@ -254,11 +277,13 @@ export default function PatientDashboard() {
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                className="lg:hidden border-t border-gray-100 overflow-hidden"
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+                className="lg:hidden overflow-hidden bg-white/50 backdrop-blur-lg rounded-2xl mb-4 border border-blue-50/50 shadow-xl"
               >
-                <nav className="py-4 space-y-1">
+                <nav className="p-3 space-y-1">
                   {navigationItems.map((item) => {
                     const Icon = item.icon;
+                    const isActive = activeTab === item.id;
                     return (
                       <button
                         key={item.id}
@@ -266,13 +291,21 @@ export default function PatientDashboard() {
                           setActiveTab(item.id);
                           setMobileMenuOpen(false);
                         }}
-                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${activeTab === item.id
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'text-gray-600 hover:bg-gray-100'
+                        className={`w-full flex items-center space-x-4 px-4 py-3.5 rounded-xl text-sm font-bold transition-all ${isActive
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-200'
+                          : 'text-gray-600 hover:bg-gray-100/80 active:bg-gray-200/80'
                           }`}
                       >
-                        <Icon className="h-5 w-5" />
+                        <div className={`p-2 rounded-lg ${isActive ? 'bg-white/20' : 'bg-gray-100'}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
                         <span>{item.label}</span>
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeDot"
+                            className="ml-auto w-1.5 h-1.5 bg-white rounded-full"
+                          />
+                        )}
                       </button>
                     );
                   })}

@@ -1,9 +1,10 @@
 # HMS Setup Guide
 
 Rules -
-1.TypeScript for type safety
-2.Don't the file structure. After asking me change it
+1. TypeScript for type safety
+2. Don't the file structure. After asking me change it
 3. Don't change database design (tell me then i manually fix up this)
+4. Use tailwindcss for css and responsive design 
 
 ## Environment Variables
 
