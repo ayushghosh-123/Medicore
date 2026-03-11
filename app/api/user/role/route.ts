@@ -94,19 +94,28 @@ export async function POST(request: Request) {
     );
 
   } catch (error) {
-    console.error('Error creating user role:', error);
-    
-    // Handle specific MongoDB errors
-    // if (error.code === 11000) {
-    //   const duplicateField = Object.keys(error.keyValue || {})[0];
-    //   return NextResponse.json(
-    //     { error: `Duplicate ${duplicateField}. This ${role} already exists.` },
-    //     { status: 409 }
-    //   );
-    // }
+    const err = error as any;
+    console.error('Error creating user role:', err);
+    // Handle specific MongoDB Validation errors
+    if (err.name === 'ValidationError') {
+      const messages = Object.values(err.errors).map((e: any) => e.message);
+      return NextResponse.json(
+        { error: 'Validation Error', details: messages },
+        { status: 400 }
+      );
+    }
+
+    // Handle specific MongoDB Duplicate Key Errors
+    if (err.code === 11000) {
+      const duplicateField = Object.keys(err.keyValue || {})[0];
+      return NextResponse.json(
+        { error: `Duplicate ${duplicateField}. This user already exists.` },
+        { status: 409 }
+      );
+    }
 
     return NextResponse.json(
-      { error: 'Failed to create user role' }, 
+      { error: 'Failed to create user role', details: err.message }, 
       { status: 500 }
     );
   }

@@ -60,7 +60,7 @@ export async function PUT(request: Request) {
     // Upsert so that a missing patient record is created on first save
     const patient = await Patient.findOneAndUpdate(
       { clerkId: userId },
-      { $set: { ...updateData }, $setOnInsert: { clerkId: userId } },
+      { $set: updateData, $setOnInsert: { clerkId: userId } },
       { new: true, runValidators: true, upsert: true }
     );
 

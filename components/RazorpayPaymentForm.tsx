@@ -106,7 +106,7 @@ export default function RazorpayPaymentForm({
     };
   }, [createOrder]); // Run on mount and when inputs to order creation change
 
-  
+
 
   // Function to handle the payment process by opening the Razorpay payment modal
   const handlePayment = (): void => {
@@ -124,9 +124,34 @@ export default function RazorpayPaymentForm({
       name: 'HMS Healthcare',
       description: `Appointment with Dr. ${doctorName}`,
       order_id: orderData.orderId, // The order ID received from the backend
-      handler: function () {
-        // This function is called when the payment is successful
-        onSuccess(); // Call the parent component's onSuccess function
+      handler: async function (response: any) {
+        try {
+          setLoading(true);
+          const verifyRes = await fetch('/api/payments/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              doctorId,
+              appointmentDate,
+              appointmentTime,
+              reason,
+              consultationFee: amount,
+            }),
+          });
+
+          if (!verifyRes.ok) {
+            throw new Error('Payment verification failed');
+          }
+
+          // Payment verified and appointment created
+          onSuccess();
+        } catch (err) {
+          setError('Payment successful, but verification failed. Please contact support.');
+          setLoading(false);
+        }
       },
       // Optional pre-filled information for the payment form
       prefill: {

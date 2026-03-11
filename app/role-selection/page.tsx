@@ -17,7 +17,7 @@ export default function RoleSelection() {
 
   const handleRoleSelection = async (role: 'patient' | 'doctor') => {
     if (!user) return;
-    
+
     setLoading(true);
     try {
       const response = await fetch('/api/user/role', {
@@ -39,6 +39,9 @@ export default function RoleSelection() {
           unsafeMetadata: { role }
         });
         router.push(role === 'doctor' ? '/doctor/onboarding' : '/patient/onboarding');
+      } else {
+        const errData = await response.json();
+        console.error('API Error Response:', errData);
       }
     } catch (error) {
       console.error('Error setting role:', error);
@@ -74,12 +77,11 @@ export default function RoleSelection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <Card 
-              className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${
-                selectedRole === 'patient' 
-                  ? 'border-blue-500 bg-blue-50' 
+            <Card
+              className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${selectedRole === 'patient'
+                  ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-blue-300'
-              }`}
+                }`}
               onClick={() => setSelectedRole('patient')}
             >
               <CardHeader className="text-center pb-4">
@@ -115,12 +117,11 @@ export default function RoleSelection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            <Card 
-              className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${
-                selectedRole === 'doctor' 
-                  ? 'border-green-500 bg-green-50' 
+            <Card
+              className={`cursor-pointer transition-all duration-300 hover:shadow-xl border-2 ${selectedRole === 'doctor'
+                  ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-green-300'
-              }`}
+                }`}
               onClick={() => setSelectedRole('doctor')}
             >
               <CardHeader className="text-center pb-4">

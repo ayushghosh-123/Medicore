@@ -2,12 +2,6 @@ import mongoose from 'mongoose';
 
 const DoctorSchema = new mongoose.Schema({
 
-  clerkUserId: {
-    type: String,
-    default: null,
-    index: true,
-    unique: true,
-  },
   clerkId: {
     type: String,
     required: true,

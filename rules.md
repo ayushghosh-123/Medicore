@@ -1,5 +1,10 @@
 # HMS Setup Guide
 
+Rules -
+1.TypeScript for type safety
+2.Don't the file structure. After asking me change it
+3. Don't change database design (tell me then i manually fix up this)
+
 ## Environment Variables
 
 Create a `.env.local` file in the root directory with the following variables:
@@ -15,11 +20,8 @@ MONGODB_URI=mongodb://localhost:27017/hospital_management
 # MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/hospital_management
 
 # Google AI (for analytics)
-GOOGLE_AI_API_KEY=your_google_ai_api_key_here
+OPENAI_API_KEY=your_google_ai_api_key_here
 
-# Next.js
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your_nextauth_secret_here
 ```
 
 ## Setup Steps
