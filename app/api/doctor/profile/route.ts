@@ -62,6 +62,7 @@ export async function PUT(request: Request) {
         qualification: (updateData["qualification"] as string) || 'To be updated',
         contactNumber: (updateData["contactNumber"] as string) || 'Not provided',
         consultationFee: (updateData["consultationFee"] as number) ?? 0,
+        address: (updateData["address"] as string) || 'To be updated', //address now updated 
         availableSlots: (updateData["availableSlots"] as unknown[]) || [],
         biography: (updateData["biography"] as string) || '',
         profileCompleted: true,

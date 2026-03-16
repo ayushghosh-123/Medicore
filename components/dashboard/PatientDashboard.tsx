@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   LogOut,
-  Heart
+  Heart,
+  MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from "next/link";
@@ -35,6 +36,7 @@ interface Doctor {
   rating: number;
   totalPatients: number;
   biography: string;
+  address: string;
   availableSlots: Array<{
     day: string;
     startTime: string;
@@ -156,7 +158,8 @@ export default function PatientDashboard() {
   const filteredDoctors = doctors.filter(doctor =>
     searchQuery === '' ||
     `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doctor.specialization.toLowerCase().includes(searchQuery.toLowerCase())
+    doctor.specialization.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    doctor.address.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getGreeting = () => {
@@ -412,22 +415,26 @@ export default function PatientDashboard() {
                           </div>
                           <div className="min-w-0">
                             <h4 className="font-semibold text-gray-900 text-sm lg:text-base truncate">
-                              Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
-                            </h4>
-                            <p className="text-xs lg:text-sm text-gray-600">{appointment.doctor.specialization}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between sm:justify-end sm:text-right gap-3">
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {new Date(appointment.appointmentDate).toLocaleDateString()}
+                                Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
+                              </h4>
+                              <p className="text-xs lg:text-sm text-gray-600">{appointment.doctor.specialization}</p>
+                              <div className="flex items-center text-[10px] lg:text-xs text-blue-600 mt-1">
+                                <MapPin className="h-3 w-3 mr-1" />
+                                <span className="truncate max-w-[150px]">{appointment.doctor.address}</span>
+                              </div>
                             </div>
-                            <div className="text-xs lg:text-sm text-gray-600">{appointment.appointmentTime}</div>
                           </div>
-                          <Badge className={`${getStatusColor(appointment.status)}`}>
-                            {appointment.status}
-                          </Badge>
-                        </div>
+                          <div className="flex items-center justify-between sm:justify-end sm:text-right gap-3">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {new Date(appointment.appointmentDate).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                              </div>
+                              <div className="text-xs lg:text-sm text-gray-600">{appointment.appointmentTime}</div>
+                            </div>
+                            <Badge className={`${getStatusColor(appointment.status)}`}>
+                              {appointment.status}
+                            </Badge>
+                          </div>
                       </div>
                     ))}
                   </div>
@@ -533,6 +540,10 @@ export default function PatientDashboard() {
                     <CardDescription className="text-sm">
                       {doctor.specialization} • {doctor.experience} years experience
                     </CardDescription>
+                    <div className="flex items-center text-xs text-blue-600 mt-1">
+                      <MapPin className="h-3 w-3 mr-1" />
+                      <span className="truncate">{doctor.address}</span>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-3 lg:space-y-4 flex-grow flex flex-col">
                     <div className="flex items-center justify-between text-sm">
@@ -550,6 +561,23 @@ export default function PatientDashboard() {
                         ({doctor.totalPatients} patients)
                       </span>
                     </div>
+
+                    {doctor.availableSlots && doctor.availableSlots.length > 0 && (
+                      <div className="space-y-1.5">
+                        <div className="flex items-center text-xs font-semibold text-gray-700">
+                          <Clock className="h-3 w-3 mr-1 text-green-600" />
+                          <span>Visiting Hours:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {doctor.availableSlots.map((slot, index) => (
+                            <Badge key={index} variant="secondary" className="text-[10px] px-1.5 py-0">
+                              {slot.day.substring(0, 3)}: {slot.startTime}-{slot.endTime}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {doctor.biography && (
                       <p className="text-sm text-gray-600 line-clamp-3">{doctor.biography}</p>
                     )}
@@ -599,13 +627,17 @@ export default function PatientDashboard() {
                               Dr. {appointment.doctor.firstName} {appointment.doctor.lastName}
                             </h4>
                             <p className="text-sm lg:text-base text-gray-600">{appointment.doctor.specialization}</p>
-                            <p className="text-xs lg:text-sm text-gray-500">{appointment.reason}</p>
+                            <div className="flex items-center text-xs text-blue-600 mt-0.5">
+                              <MapPin className="h-3 w-3 mr-1" />
+                              <span>{appointment.doctor.address}</span>
+                            </div>
+                            <p className="text-xs lg:text-sm text-gray-500 mt-1">{appointment.reason}</p>
                           </div>
                         </div>
                         <div className="flex items-center justify-between sm:justify-end sm:text-right gap-3">
                           <div>
                             <div className="text-base lg:text-lg font-semibold text-gray-900">
-                              {new Date(appointment.appointmentDate).toLocaleDateString()}
+                              {new Date(appointment.appointmentDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                             </div>
                             <div className="text-sm text-gray-600">{appointment.appointmentTime}</div>
                           </div>

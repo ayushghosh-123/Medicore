@@ -45,6 +45,7 @@ export default function DoctorOnboarding() {
     qualification: '',
     contactNumber: '',
     consultationFee: '',
+    address: '',
     biography: '',
     availableSlots: [] as Array<{ day: string; startTime: string; endTime: string }>,
   });
@@ -201,6 +202,17 @@ export default function DoctorOnboarding() {
                       value={formData.consultationFee}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, consultationFee: e.target.value }))}
                       placeholder="100"
+                      required
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="address">Clinic/Practice Address *</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                      placeholder="Room 101, Medical Center, 123 Health St."
                       required
                     />
                   </div>

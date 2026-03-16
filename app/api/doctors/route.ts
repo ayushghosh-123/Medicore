@@ -14,7 +14,7 @@ export async function GET() {
     
     // Fetch all active doctors
     const doctors = await Doctor.find({ isActive: true })
-      .select('firstName lastName specialization experience qualification consultationFee rating totalPatients biography availableSlots')
+      .select('firstName lastName specialization experience qualification consultationFee rating totalPatients biography availableSlots address')
       .sort({ rating: -1, totalPatients: -1 });
 
     // Transform the data to match the expected format
@@ -29,6 +29,7 @@ export async function GET() {
       rating: doctor.rating,
       totalPatients: doctor.totalPatients,
       biography: doctor.biography,
+      address: doctor.address,
       availableSlots: doctor.availableSlots || []
     }));
 

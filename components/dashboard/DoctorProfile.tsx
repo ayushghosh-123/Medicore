@@ -30,6 +30,7 @@ interface Doctor {
     endTime: string;
   }>;
   biography?: string;
+  address?: string;
   rating?: number;
   totalPatients?: number;
   profileCompleted?: boolean;
@@ -58,6 +59,7 @@ export default function DoctorProfile() {
     contactNumber: '',
     consultationFee: '',
     biography: '',
+    address: '',
     availableSlots: [] as Array<{ day: string; startTime: string; endTime: string }>,
   });
 
@@ -107,6 +109,7 @@ export default function DoctorProfile() {
           contactNumber: data.doctor.contactNumber || '',
           consultationFee: data.doctor.consultationFee?.toString() || '',
           biography: data.doctor.biography || '',
+          address: data.doctor.address || '',
           availableSlots: data.doctor.availableSlots || [],
         });
       }
@@ -197,6 +200,7 @@ export default function DoctorProfile() {
         contactNumber: doctor.contactNumber || '',
         consultationFee: doctor.consultationFee?.toString() || '',
         biography: doctor.biography || '',
+        address: doctor.address || '',
         availableSlots: doctor.availableSlots || [],
       });
     }
@@ -361,6 +365,21 @@ export default function DoctorProfile() {
                   <p className="text-sm text-gray-900 mt-1">${doctor?.consultationFee || 'Not provided'}</p>
                 )}
               </div>
+            </div>
+            
+            {/* Clinic Address field (editable) */}
+            <div>
+              <Label htmlFor="address">Clinic Address</Label>
+              {editing ? (
+                <Input
+                  id="address"
+                  value={formData.address}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="e.g., Room 101, Medical Center, 123 Health St."
+                />
+              ) : (
+                <p className="text-sm text-gray-900 mt-1">{doctor?.address || 'Not provided'}</p>
+              )}
             </div>
           </CardContent>
         </Card>

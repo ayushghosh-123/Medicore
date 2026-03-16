@@ -40,6 +40,11 @@ const DoctorSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  address: {
+    type: String,
+    required: true,
+    default: 'To be updated',
+  },
   availableSlots: [{
     day: String,
     startTime: String,

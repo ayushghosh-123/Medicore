@@ -22,7 +22,7 @@ export async function GET() {
 
     // Fetch appointments for this patient with doctor details
     const appointments = await Appointment.find({ patientId: patient._id })
-      .populate('doctorId', 'firstName lastName specialization experience qualification consultationFee rating totalPatients biography availableSlots')
+      .populate('doctorId', 'firstName lastName specialization experience qualification consultationFee rating totalPatients biography availableSlots address')
       .sort({ appointmentDate: -1 });
 
     // Filter out appointments where doctorId is null and transform the data
@@ -41,6 +41,7 @@ export async function GET() {
           rating: apt.doctorId.rating,
           totalPatients: apt.doctorId.totalPatients,
           biography: apt.doctorId.biography,
+          address: apt.doctorId.address,
           availableSlots: apt.doctorId.availableSlots || []
         },
         appointmentDate: apt.appointmentDate,
