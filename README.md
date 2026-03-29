@@ -1,6 +1,4 @@
-# 🏥 Healthcare Plus - Digital Healthcare Management System
-
-A comprehensive digital healthcare platform that connects patients with healthcare providers, enabling seamless appointment booking, secure communication, and AI-powered medical report analysis.
+# 🏥 Healthcare Plus - Digital Healthcare Management System.
 
 ![Healthcare Plus](https://img.shields.io/badge/Healthcare-Plus-blue?style=for-the-badge&logo=health)
 ![Next.js](https://img.shields.io/badge/Next.js-15.4.6-black?style=for-the-badge&logo=next.js)
